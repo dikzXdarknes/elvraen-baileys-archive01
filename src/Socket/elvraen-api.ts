@@ -1,5 +1,5 @@
 import { proto } from '../../WAProto/index.js'
-import type { AnyMessageContent, MiscMessageGenerationOptions, WAMessage, WAMessageKey } from '../Types'
+import type { AnyMessageContent, ChatModification, LastMessageList, MiscMessageGenerationOptions, WAMessage, WAMessageKey } from '../Types'
 
 type ElvraenSocket = {
 	sendMessage: (
@@ -7,6 +7,13 @@ type ElvraenSocket = {
 		content: AnyMessageContent,
 		options?: MiscMessageGenerationOptions
 	) => Promise<unknown>
+	star: (
+		jid: string,
+		messages: { id: string; fromMe?: boolean }[],
+		star: boolean
+	) => Promise<unknown>
+	readMessages: (keys: WAMessageKey[]) => Promise<unknown>
+	chatModify: (mod: ChatModification, jid: string) => Promise<unknown>
 }
 
 export const attachElvraenAPI = <T extends ElvraenSocket>(sock: T) => {
@@ -389,6 +396,34 @@ export const attachElvraenAPI = <T extends ElvraenSocket>(sock: T) => {
 					{ ...content, edit: key },
 					options
 				),
+
+		readMessages: async (keys: WAMessageKey[]) => sock.readMessages(keys),
+		sendStatus: async (
+			content: AnyMessageContent,
+			options: MiscMessageGenerationOptions = {}
+		) => sock.sendMessage('status@broadcast', content, options),
+
+
+		archiveChat: async (jid: string, lastMessages: LastMessageList) =>
+			sock.chatModify({ archive: true, lastMessages }, jid),
+
+		unarchiveChat: async (jid: string, lastMessages: LastMessageList) =>
+			sock.chatModify({ archive: false, lastMessages }, jid),
+
+		markChatUnread: async (jid: string, lastMessages: LastMessageList) =>
+			sock.chatModify({ markRead: false, lastMessages }, jid),
+
+
+		starMessage: async (
+			jid: string,
+			key: { id: string; fromMe?: boolean }
+		) => sock.star(jid, [key], true),
+
+		unstarMessage: async (
+			jid: string,
+			key: { id: string; fromMe?: boolean }
+		) => sock.star(jid, [key], false),
+
 		},
 	})
 }
