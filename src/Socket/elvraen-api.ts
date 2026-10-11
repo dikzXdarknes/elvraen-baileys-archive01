@@ -377,6 +377,18 @@ export const attachElvraenAPI = <T extends ElvraenSocket>(sock: T) => {
 					{ text },
 					{ ...options, quoted }
 				),
+
+			editMessage: async (
+				jid: string,
+				key: WAMessageKey,
+				content: AnyMessageContent,
+				options: MiscMessageGenerationOptions = {}
+			) =>
+				sock.sendMessage(
+					jid,
+					{ ...content, edit: key },
+					options
+				),
 		},
 	})
 }
