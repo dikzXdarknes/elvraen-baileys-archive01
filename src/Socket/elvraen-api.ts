@@ -1,4 +1,7 @@
 import { proto } from '../../WAProto/index.js'
+import type { WABusinessProfile } from '../Types'
+import type { LabelActionBody } from '../Types/Label.js'
+import type { QuickReplyAction } from '../Types/Bussines.js'
 import type { AnyMessageContent, ChatModification, LastMessageList, MiscMessageGenerationOptions, WAMessage, WAMessageKey } from '../Types'
 
 type ElvraenSocket = {
@@ -14,11 +17,83 @@ type ElvraenSocket = {
 	) => Promise<unknown>
 	readMessages: (keys: WAMessageKey[]) => Promise<unknown>
 	chatModify: (mod: ChatModification, jid: string) => Promise<unknown>
+	onWhatsApp: (...phoneNumbers: string[]) => Promise<
+		{ jid: string; exists: boolean }[] | undefined
+	>
+        profilePictureUrl: (
+                jid: string,
+                type?: 'preview' | 'image',
+                timeoutMs?: number
+        ) => Promise<string | undefined>
+        fetchStatus: (...jids: string[]) => Promise<unknown>
+        fetchBlocklist: () => Promise<(string | undefined)[]>
+        updateProfileStatus: (status: string) => Promise<void>
+        updateProfileName: (name: string) => Promise<void>
+        getBusinessProfile: (jid: string) => Promise<WABusinessProfile | void>
+        addOrEditContact: (jid: string, contact: proto.SyncActionValue.IContactAction) => Promise<unknown>
+        removeContact: (jid: string) => Promise<unknown>
+        addLabel: (jid: string, labels: LabelActionBody) => Promise<unknown>
+        addChatLabel: (jid: string, labelId: string) => Promise<unknown>
+        removeChatLabel: (jid: string, labelId: string) => Promise<unknown>
+        addMessageLabel: (jid: string, messageId: string, labelId: string) => Promise<unknown>
+        removeMessageLabel: (jid: string, messageId: string, labelId: string) => Promise<unknown>
+        addOrEditQuickReply: (quickReply: QuickReplyAction) => Promise<unknown>
+        removeQuickReply: (timestamp: string) => Promise<unknown>
+
 }
 
 export const attachElvraenAPI = <T extends ElvraenSocket>(sock: T) => {
 	return Object.assign(sock, {
 		elvraen: {
+			checkWhatsApp: async (...phoneNumbers: string[]) =>
+				sock.onWhatsApp(...phoneNumbers),
+
+			getProfilePicture: async (
+				jid: string,
+				type: 'preview' | 'image' = 'preview',
+				timeoutMs?: number
+			) => sock.profilePictureUrl(jid, type, timeoutMs),
+
+			getStatus: async (...jids: string[]) =>
+				sock.fetchStatus(...jids),
+
+			getBlocklist: async () => sock.fetchBlocklist(),
+
+			updateProfileStatus: async (status: string) =>
+				sock.updateProfileStatus(status),
+
+			updateProfileName: async (name: string) =>
+				sock.updateProfileName(name),
+
+			getBusinessProfile: async (jid: string) =>
+				sock.getBusinessProfile(jid),
+
+			addOrEditContact: async (jid: string, contact: proto.SyncActionValue.IContactAction) =>
+				sock.addOrEditContact(jid, contact),
+
+			removeContact: async (jid: string) =>
+				sock.removeContact(jid),
+
+			addLabel: async (jid: string, labels: LabelActionBody) =>
+				sock.addLabel(jid, labels),
+
+			addChatLabel: async (jid: string, labelId: string) =>
+				sock.addChatLabel(jid, labelId),
+
+			removeChatLabel: async (jid: string, labelId: string) =>
+				sock.removeChatLabel(jid, labelId),
+
+			addMessageLabel: async (jid: string, messageId: string, labelId: string) =>
+				sock.addMessageLabel(jid, messageId, labelId),
+			removeMessageLabel: async (jid: string, messageId: string, labelId: string) =>
+				sock.removeMessageLabel(jid, messageId, labelId),
+
+			addOrEditQuickReply: async (quickReply: QuickReplyAction) =>
+				sock.addOrEditQuickReply(quickReply),
+
+			removeQuickReply: async (timestamp: string) =>
+				sock.removeQuickReply(timestamp),
+
 			sendText: async (
 				jid: string,
 				text: string,
